@@ -9,7 +9,6 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - ./minio_data:/data
-      - ./init-mc.sh:/docker-entrypoint-init.d/init-mc.sh:ro
     expose:
       - "9000"
       - "9001"
@@ -20,6 +19,27 @@ services:
       retries: 5
     networks:
       - turfhub_network
+
+  mc:
+    image: minio/mc:latest
+    container_name: turfhub_mc
+    depends_on:
+      - minio
+    networks:
+      - turfhub_network
+    entrypoint: >
+      /bin/sh -c "
+      echo '⏳ Waiting for MinIO to start...' &&
+      sleep 15 &&
+      echo '🔧 Setting up MinIO alias...' &&
+      mc alias set myminio http://minio:9000 admin strongpassword123 &&
+      echo '📦 Creating default bucket (if not exists)...' &&
+      mc mb myminio/default || true &&
+      echo '✅ Applying default bucket policy...' &&
+      mc anonymous set public myminio/default &&
+      echo '🎉 MinIO initialization complete.' &&
+      tail -f /dev/null
+      "
 
 networks:
   turfhub_network:
