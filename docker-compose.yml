@@ -9,9 +9,15 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - ./minio_data:/data
+      - ./init-mc.sh:/docker-entrypoint-init.d/init-mc.sh:ro
     expose:
       - "9000"
       - "9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - turfhub_network
 
