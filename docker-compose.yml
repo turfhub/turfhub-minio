@@ -33,10 +33,10 @@ services:
       sleep 15 &&
       echo '🔧 Setting up MinIO alias...' &&
       mc alias set myminio http://minio:9000 admin strongpassword123 &&
-      echo '📦 Creating default bucket (if not exists)...' &&
-      mc mb myminio/default || true &&
-      echo '✅ Applying default bucket policy...' &&
-      mc anonymous set public myminio/default &&
+      echo '📦 Creating bucket (images)...' &&
+      mc mb myminio/images || true &&
+      echo '✅ Applying read-only public policy...' &&
+      mc policy set download myminio/images &&
       echo '🎉 MinIO initialization complete.' &&
       tail -f /dev/null
       "
