@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   minio:
     image: minio/minio:latest
@@ -25,19 +27,20 @@ services:
     container_name: turfhub_mc
     depends_on:
       - minio
+    restart: unless-stopped
     networks:
       - turfhub_network
     entrypoint: >
       /bin/sh -c "
-      echo '⏳ Waiting for MinIO to start...' &&
-      sleep 15 &&
-      echo '🔧 Setting up MinIO alias...' &&
-      mc alias set myminio http://minio:9000 admin strongpassword123 &&
+      echo '⏳ Waiting for MinIO to be ready...' &&
+      until (mc alias set myminio http://minio:9000 admin strongpassword123); do
+        echo 'Waiting for MinIO...'; sleep 3;
+      done &&
       echo '📦 Creating bucket (images)...' &&
       mc mb myminio/images || true &&
-      echo '✅ Applying read-only public policy...' &&
-      mc policy set download myminio/images &&
-      echo '🎉 MinIO initialization complete.' &&
+      echo '✅ Applying public-read (GET only) policy...' &&
+      mc anonymous set download myminio/images &&
+      echo '🎉 MinIO initialization complete. Keeping container alive...' &&
       tail -f /dev/null
       "
 
